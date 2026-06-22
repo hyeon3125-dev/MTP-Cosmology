@@ -77,11 +77,21 @@ is specified in [docs/comparison_methodology.yaml](docs/comparison_methodology.y
 
 ```bash
 python scripts/run_compare.py --stage phase_0   # mock pipeline validation
-python scripts/run_compare.py --stage phase_1   # real DESI DR1 BAO
+python scripts/run_compare.py --stage phase_1   # real DESI DR1 BAO (geometry)
+python scripts/run_compare.py --stage phase_3   # + Gold-2018 RSD (growth)
+python scripts/run_compare.py --stage phase_4   # + Planck18 compressed CMB
 ```
 
 Outputs an AIC/BIC/Δln Z table over {ΛCDM, CPL, constant IDE, sign-switching IDE,
-MTP-3p}. See [worklog.md](worklog.md) for results.
+MTP-3p, MTP-4p}, all under identical priors/likelihood/sampler.
+
+**Verdict across geometry → growth → CMB (real data):** CPL is the only model
+that beats ΛCDM on both AIC and BIC, capturing the DESI evolving-DE signal
+(w₀≈−0.7, wₐ≈−1). The windowed IDE never beats ΛCDM; adding Planck's (R, l_A)
+**drives the IDE coupling to zero** (D_M(z\*) pins the late-time expansion), so
+β₀ ends up consistent with 0. As a GR-perturbative late-time coupling the model
+is *not economical* vs CPL — see [worklog.md](worklog.md), [paper/paper.md](paper/paper.md),
+and [docs/phase4_cmb.md](docs/phase4_cmb.md).
 
 See [worklog.md](worklog.md) for the running log and
 [ARCHITECTURE.md](ARCHITECTURE.md) for the model.

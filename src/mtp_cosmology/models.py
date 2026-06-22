@@ -41,11 +41,15 @@ def solve_ide(z_arr, kernel: Callable[[float], float]):
         drho_de = qh / (1.0 + z)          # 3(1+w)=0 for w=-1
         return [drho_c, drho_de]
 
-    sol = solve_ivp(sys, (0.0, float(np.max(z_arr))), [1.0, 1.0],
-                    t_eval=z_arr, method="RK45", rtol=1e-8, atol=1e-10)
+    z_arr = np.atleast_1d(np.asarray(z_arr, dtype=float))
+    order = np.argsort(z_arr)             # t_eval must be sorted ascending
+    z_sorted = z_arr[order]
+    sol = solve_ivp(sys, (0.0, float(z_sorted[-1])), [1.0, 1.0],
+                    t_eval=z_sorted, method="RK45", rtol=1e-8, atol=1e-10)
     if not sol.success:
         raise RuntimeError(sol.message)
-    return sol.y[0], sol.y[1]
+    inv = np.argsort(order)               # restore original ordering
+    return sol.y[0][inv], sol.y[1][inv]
 
 
 def _H_from_densities(z, rho_c, rho_de):
@@ -60,6 +64,7 @@ class Model:
     bounds: dict
     _H: Callable
     description: str = ""
+    _kernel: Callable | None = None   # (theta)->kernel(z); None for non-IDE
 
     @property
     def k(self) -> int:
@@ -68,6 +73,17 @@ class Model:
     def H(self, z, theta):
         z = np.atleast_1d(np.asarray(z, dtype=float))
         return self._H(z, np.atleast_1d(np.asarray(theta, dtype=float)))
+
+    def rho_m(self, z, theta):
+        """Normalized matter (CDM) density rho_c(z)/rho_c0.
+
+        Non-IDE models: standard (1+z)^3. IDE models: from the coupled solve.
+        """
+        z = np.atleast_1d(np.asarray(z, dtype=float))
+        if self._kernel is None:
+            return (1.0 + z) ** 3
+        rho_c, _ = solve_ide(z, self._kernel(np.atleast_1d(np.asarray(theta, dtype=float))))
+        return rho_c
 
 
 # ── LambdaCDM (0 free params) ────────────────────────────────────────────────
@@ -126,6 +142,27 @@ def _H_mtp4p(z, theta):
     return _H_from_densities(z, rho_c, rho_de)
 
 
+# Coupling-kernel factories (theta -> kernel(z)) for IDE models; used by rho_m.
+def _k_const(theta):
+    return lambda zz: theta[0]
+
+def _k_signswitch(theta):
+    xi0, zc, dz = theta
+    return lambda zz: xi0 * np.tanh((zz - zc) / dz)
+
+def _k_mtp3p(theta):
+    return _mtp_kernel(theta[0], theta[1], theta[2])
+
+def _k_mtp4p(theta):
+    from .model import F_hier
+    beta0, z_star, sigma, zc = theta
+    def k(zz):
+        beta = beta0 * np.tanh((zz - zc) / sigma)
+        w = np.exp(-((zz - z_star) ** 2) / (2.0 * sigma ** 2))
+        return beta * F_hier(zz, 2.0) * w
+    return k
+
+
 # Flat-prior bounds follow docs/comparison_methodology.yaml.
 REGISTRY = {
     "lcdm": Model("lcdm", [], {}, _H_lcdm, "base control (0 free DE params)"),
@@ -134,17 +171,17 @@ REGISTRY = {
                       _H_cpl, "CPL dynamical DE"),
     "standard_ide": Model("standard_ide", ["xi"],
                           {"xi": (-0.3, 0.3)},
-                          _H_ide_const, "constant-coupling IDE"),
+                          _H_ide_const, "constant-coupling IDE", _k_const),
     "sign_switching_ide": Model("sign_switching_ide", ["xi0", "zc", "dz"],
                                 {"xi0": (-0.3, 0.3), "zc": (0.0, 1.5), "dz": (0.02, 1.0)},
-                                _H_ide_signswitch, "sign-switching IDE"),
+                                _H_ide_signswitch, "sign-switching IDE", _k_signswitch),
     "mtp_3p": Model("mtp_3p", ["beta0", "z_star", "sigma"],
                     {"beta0": (0.0, 0.3), "z_star": (0.0, 1.5), "sigma": (0.05, 1.0)},
-                    _H_mtp3p, "MTP windowed IDE (zc=z*, dz=sigma)"),
+                    _H_mtp3p, "MTP windowed IDE (zc=z*, dz=sigma)", _k_mtp3p),
     "mtp_4p": Model("mtp_4p", ["beta0", "z_star", "sigma", "zc"],
                     {"beta0": (0.0, 0.3), "z_star": (0.0, 1.5),
                      "sigma": (0.05, 1.0), "zc": (0.0, 1.5)},
-                    _H_mtp4p, "MTP windowed IDE (zc free)"),
+                    _H_mtp4p, "MTP windowed IDE (zc free)", _k_mtp4p),
 }
 
 

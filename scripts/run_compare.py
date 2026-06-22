@@ -35,6 +35,16 @@ STAGES = {
         data="desi",
         goal="late-time geometry (real DESI DR1 BAO)",
     ),
+    "phase_3": dict(
+        models=["lcdm", "cpl_w0wa", "standard_ide", "sign_switching_ide", "mtp_3p", "mtp_4p"],
+        data="desi+rsd",
+        goal="geometry + growth (DESI DR1 BAO + Gold-2018 RSD fsigma8)",
+    ),
+    "phase_4": dict(
+        models=["lcdm", "cpl_w0wa", "standard_ide", "sign_switching_ide", "mtp_3p", "mtp_4p"],
+        data="full",
+        goal="Planck18 compressed CMB + DESI DR1 BAO + Gold-2018 RSD",
+    ),
 }
 
 
@@ -43,6 +53,12 @@ def make_data(kind: str) -> C.Dataset:
         return C.mock_dataset(fiducial="cpl_w0wa", theta=(-0.85, -0.60), seed=42)
     if kind == "desi":
         return C.desi_dr1_dataset()
+    if kind == "rsd":
+        return C.rsd_dataset()
+    if kind == "desi+rsd":
+        return C.desi_plus_rsd_dataset()
+    if kind == "full":
+        return C.full_dataset()
     raise ValueError(kind)
 
 

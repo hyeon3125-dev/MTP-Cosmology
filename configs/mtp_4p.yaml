@@ -1,0 +1,8 @@
+model: mtp_4p
+description: MTP windowed IDE (zc free, dz=sigma)
+free_params:
+  beta0:  {prior: [0.0, 0.3]}
+  z_star: {prior: [0.0, 1.5]}
+  sigma:  {prior: [0.05, 1.0]}
+  zc:     {prior: [0.0, 1.5]}
+fixed_background: {H0: 67.4, Omega_m: 0.315, Omega_de: 0.685, Omega_r: 9.2e-5}

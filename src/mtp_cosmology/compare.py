@@ -20,8 +20,8 @@ from dataclasses import dataclass, field
 import numpy as np
 from scipy.optimize import minimize
 
-from .model import C_KM
-from .data import desi_dr1, R_D
+from .model import C_KM, OM0, H0, Hz_LCDM
+from .data import desi_dr1, rsd_gold2018, planck18_distance_prior, R_D
 from . import models as M
 
 
@@ -51,6 +51,20 @@ class BAOIsoBlock:
     DV_rd: np.ndarray
     sigma: np.ndarray
 
+@dataclass
+class RSDBlock:
+    z: np.ndarray
+    fs8: np.ndarray        # f*sigma8(z)
+    sigma: np.ndarray
+
+@dataclass
+class CMBDistBlock:
+    """Planck compressed-CMB distance prior on (R, l_A)."""
+    data: np.ndarray       # [R, l_A]
+    cov: np.ndarray        # 2x2
+    z_star: float
+    r_s: float
+
 
 @dataclass
 class Dataset:
@@ -59,6 +73,8 @@ class Dataset:
     sn: SNBlock | None = None
     bao_aniso: BAOAnisoBlock | None = None
     bao_iso: BAOIsoBlock | None = None
+    rsd: RSDBlock | None = None
+    cmb: CMBDistBlock | None = None
     r_d: float = R_D
 
     @property
@@ -68,11 +84,13 @@ class Dataset:
         if self.sn is not None: n += len(self.sn.z)
         if self.bao_aniso is not None: n += 2 * len(self.bao_aniso.z)
         if self.bao_iso is not None: n += len(self.bao_iso.z)
+        if self.rsd is not None: n += len(self.rsd.z)
+        if self.cmb is not None: n += 2
         return n
 
     def _all_z(self):
         zs = [np.array([0.0])]
-        for blk in (self.H, self.sn, self.bao_aniso, self.bao_iso):
+        for blk in (self.H, self.sn, self.bao_aniso, self.bao_iso, self.rsd):
             if blk is not None:
                 zs.append(np.atleast_1d(blk.z))
         return np.concatenate(zs)
@@ -115,7 +133,44 @@ class Dataset:
             dm = DM_at(b.z); dh = C_KM / H_at(b.z)
             dv_rd = (b.z * dm ** 2 * dh) ** (1.0 / 3.0) / self.r_d
             chi2 += np.sum(((dv_rd - b.DV_rd) / b.sigma) ** 2)
+        if self.rsd is not None:
+            from .growth import fsigma8
+            model_fs8 = fsigma8(model, theta, self.rsd.z)
+            chi2 += np.sum(((self.rsd.fs8 - model_fs8) / self.rsd.sigma) ** 2)
+        if self.cmb is not None:
+            R, lA = self._cmb_R_lA(model, theta, self.cmb.z_star, self.cmb.r_s)
+            resid = np.array([R - self.cmb.data[0], lA - self.cmb.data[1]])
+            chi2 += float(resid @ np.linalg.solve(self.cmb.cov, resid))
         return float(chi2) if np.isfinite(chi2) else np.inf
+
+    @staticmethod
+    def _cmb_R_lA(model: M.Model, theta, z_star: float, r_s: float):
+        """Shift parameter R and acoustic scale l_A from the model background.
+
+        R   = sqrt(Om0) * (H0/c) * D_M(z*)
+        l_A = pi * D_M(z*) / r_s(z*)
+        D_M(z*) integrates c/H to decoupling; the model is Planck-LambdaCDM at
+        high z (W_late->0) so only the late-time part of the integral shifts.
+        """
+        # Split the integral at z_lo: below it, evaluate the model H (the IDE
+        # window is alive); above it the coupling is dead (W_late->0) so the
+        # background is Planck-LambdaCDM and H is analytic — no need to integrate
+        # the IDE ODE to z~1090 (that was the bottleneck).
+        z_lo = 12.0
+        z_below = np.linspace(1e-4, z_lo, 400)
+        H_below = model.H(z_below, theta)
+        if not np.all(np.isfinite(H_below)) or np.any(H_below <= 0):
+            return np.inf, np.inf
+        DM_below = np.trapz(C_KM / H_below, z_below)
+        # tail z_lo -> z_star (matter+radiation dominated). Analytic models
+        # (LCDM/CPL) use their own H; IDE models use LambdaCDM (coupling dead).
+        z_above = np.linspace(z_lo, z_star, 4000)
+        H_above = model.H(z_above, theta) if model._kernel is None else Hz_LCDM(z_above)
+        DM_above = np.trapz(C_KM / H_above, z_above)
+        DM_star = DM_below + DM_above                # Mpc, comoving
+        R = np.sqrt(OM0) * (H0 / C_KM) * DM_star
+        lA = np.pi * DM_star / r_s
+        return R, lA
 
 
 # ── real DESI DR1 BAO dataset ────────────────────────────────────────────────
@@ -133,6 +188,34 @@ def desi_dr1_dataset() -> Dataset:
         sigma=np.array([b.sigma for b in iso]),
     )
     return Dataset("DESI_DR1_BAO", bao_aniso=ba, bao_iso=bi)
+
+
+def rsd_dataset() -> Dataset:
+    """Gold-2018 RSD f*sigma8 compilation as a standalone dataset."""
+    z, fs8, sig = rsd_gold2018()
+    return Dataset("RSD_Gold2018", rsd=RSDBlock(z, fs8, sig))
+
+
+def desi_plus_rsd_dataset() -> Dataset:
+    """DESI DR1 BAO (geometry) + Gold-2018 RSD (growth) — phase_3."""
+    d = desi_dr1_dataset()
+    z, fs8, sig = rsd_gold2018()
+    d.rsd = RSDBlock(z, fs8, sig)
+    d.name = "DESI_DR1_BAO + RSD_Gold2018"
+    return d
+
+
+def cmb_block() -> CMBDistBlock:
+    data, cov, z_star, r_s = planck18_distance_prior()
+    return CMBDistBlock(data, cov, z_star, r_s)
+
+
+def full_dataset() -> Dataset:
+    """Planck18 compressed CMB + DESI DR1 BAO + Gold-2018 RSD — phase_4."""
+    d = desi_plus_rsd_dataset()
+    d.cmb = cmb_block()
+    d.name = "Planck18(R,lA) + DESI_DR1_BAO + RSD_Gold2018"
+    return d
 
 
 # ── mock dataset from a fiducial model (phase_0 pipeline validation) ─────────

@@ -152,10 +152,23 @@ geometry as much as a free w(a), so its extra parameters are penalized.
 | MTP-3p | 3 | 20.03 | +5.60 | +7.05 | −0.22 |
 | MTP-4p | 4 | 18.17 | +5.73 | +7.67 | −0.34 |
 
-**On geometry alone, the windowed IDE is not competitive with CPL.** Its only
-plausible edge is the growth sector (fσ8/S8), where dark-sector energy transfer
-imprints a signature absent from a pure w(a) parametrization — the natural next
-test (§7).
+**On geometry alone, the windowed IDE is not competitive with CPL.** Adding the
+growth sector and then the CMB does not change this — and the CMB makes it
+decisive:
+
+- **+ growth** (Gold-2018 RSD fσ8): the perturbative coupling suppresses fσ8 by
+  only ~2–3%, comparable to the data errors. CPL still wins on AIC+BIC; the IDE
+  models do not beat ΛCDM.
+- **+ CMB** (Planck 2018 R, l_A): the best-fit couplings collapse to zero
+  (standard IDE ξ → 0, sign-switching ξ₀ → 0, windowed IDE pushed to
+  negligible-effect corners). R and l_A pin D_M(z\*) — the integrated late-time
+  expansion — so any IDE rebalancing of the dark sector is penalized unless the
+  coupling vanishes. CPL survives because w(a) reshapes the EoS while preserving
+  D_M(z\*).
+
+Thus across geometry → growth → CMB the windowed IDE is **not economical**: it
+never beats ΛCDM and is driven to its no-coupling limit by Planck. This triggers
+the pre-registered `failure_case` (β₀ consistent with zero).
 
 ## 6. Screening and Solar-System tests
 

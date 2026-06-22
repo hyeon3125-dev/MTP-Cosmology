@@ -1,0 +1,9 @@
+model: mtp_3p
+description: MTP windowed IDE (zc=z*, dz=sigma), Q=beta(z) H rho_c F_hier W_late
+free_params:
+  beta0:  {prior: [0.0, 0.3]}
+  z_star: {prior: [0.0, 1.5]}
+  sigma:  {prior: [0.05, 1.0]}
+fixed_background: {H0: 67.4, Omega_m: 0.315, Omega_de: 0.685, Omega_r: 9.2e-5}
+optional_physical_prior:
+  z_star: {gaussian: {mean: 0.3, sigma: 0.3}, note: "coincidence-epoch prior; robustness check only"}

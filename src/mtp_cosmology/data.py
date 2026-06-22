@@ -52,6 +52,56 @@ class BAOIso:
     sigma: float
 
 
+# "Gold-2018" growth-rate compilation (Sagredo, Nesseris & Perivolaropoulos
+# 2018, arXiv:1806.10822, Table III): (z, fsigma8, sigma). The per-point
+# fiducial Omega_m (used for the Alcock-Paczynski correction) is omitted here;
+# we fit fsigma8 directly (a standard first-order approximation).
+RSD_GOLD2018 = [
+    (0.02, 0.428, 0.0465), (0.02, 0.398, 0.065), (0.02, 0.314, 0.048),
+    (0.10, 0.370, 0.130), (0.15, 0.490, 0.145), (0.17, 0.510, 0.060),
+    (0.18, 0.360, 0.090), (0.38, 0.440, 0.060), (0.25, 0.3512, 0.0583),
+    (0.37, 0.4602, 0.0378), (0.32, 0.384, 0.095), (0.59, 0.488, 0.060),
+    (0.44, 0.413, 0.080), (0.60, 0.390, 0.063), (0.73, 0.437, 0.072),
+    (0.60, 0.550, 0.120), (0.86, 0.400, 0.110), (1.40, 0.482, 0.116),
+    (0.978, 0.379, 0.176), (1.23, 0.385, 0.099), (1.526, 0.342, 0.070),
+    (1.944, 0.364, 0.106),
+]
+
+
+def rsd_gold2018():
+    """Return (z, fsigma8, sigma) arrays for the Gold-2018 RSD compilation."""
+    arr = np.array(RSD_GOLD2018)
+    return arr[:, 0], arr[:, 1], arr[:, 2]
+
+
+# Planck 2018 compressed-CMB distance priors (Chen, Huang & Wang 2019,
+# arXiv:1808.05724, Table I; LambdaCDM, TT,TE,EE+lowE). For a late-time-only DE
+# model these carry the full geometric CMB information (R and l_A depend on the
+# expansion history out to decoupling). omega_b and n_s are early-time and held
+# fixed, so we use the (R, l_A) 2-parameter prior our background predicts.
+PLANCK18_R = 1.7502
+PLANCK18_LA = 301.471
+PLANCK18_SIG_R = 0.0046
+PLANCK18_SIG_LA = 0.090
+PLANCK18_CORR_R_LA = 0.46
+PLANCK18_ZSTAR = 1089.92          # decoupling redshift (Planck 2018)
+# Sound horizon at z_star [Mpc]. Planck 2018 gives ~144.43; we use 144.476,
+# calibrated so the fixed fiducial Planck-LambdaCDM background reproduces the
+# prior's central l_A exactly (absorbs the precise r_s/z* and the numerical
+# D_M(z*) integration). Well within the ~0.3 Mpc r_s uncertainty; affects all
+# models equally and so cancels in the differential comparison.
+PLANCK18_RS_ZSTAR = 144.476
+
+
+def planck18_distance_prior():
+    """Return (data=[R, l_A], cov 2x2, z_star, r_s) for the Planck 2018 prior."""
+    c = PLANCK18_CORR_R_LA * PLANCK18_SIG_R * PLANCK18_SIG_LA
+    cov = np.array([[PLANCK18_SIG_R ** 2, c],
+                    [c, PLANCK18_SIG_LA ** 2]])
+    data = np.array([PLANCK18_R, PLANCK18_LA])
+    return data, cov, PLANCK18_ZSTAR, PLANCK18_RS_ZSTAR
+
+
 def desi_dr1():
     """Return (aniso_list, iso_list) of DESI DR1 BAO data objects."""
     aniso = []

@@ -1,0 +1,6 @@
+# Model config for the comparison engine. Background fixed to Planck 2018
+# (background-level comparison); only dark-sector params are free.
+model: lcdm
+description: base control / null hypothesis
+free_params: []                     # zero free dark-sector parameters
+fixed_background: {H0: 67.4, Omega_m: 0.315, Omega_de: 0.685, Omega_r: 9.2e-5}

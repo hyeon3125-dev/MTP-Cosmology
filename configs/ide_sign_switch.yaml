@@ -1,0 +1,7 @@
+model: sign_switching_ide
+description: sign-switching IDE, Q = xi(z) H rho_c, xi(z)=xi0 tanh((z-zc)/dz)
+free_params:
+  xi0: {prior: [-0.3, 0.3]}
+  zc:  {prior: [0.0, 1.5]}
+  dz:  {prior: [0.02, 1.0]}
+fixed_background: {H0: 67.4, Omega_m: 0.315, Omega_de: 0.685, Omega_r: 9.2e-5}
