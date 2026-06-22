@@ -9,4 +9,4 @@ venv/
 cosmo_packages/
 *.chains/
 # Large MCMC chain CSVs are regenerated; keep summaries, ignore raw chains.
-results/*_chain.csv
+results/*chain*.csv

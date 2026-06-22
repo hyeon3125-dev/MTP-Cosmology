@@ -90,6 +90,25 @@ sampler:     emcee (affine-invariant); convergence via R̂ / autocorrelation
 params:      θ = (β₀, z*, σ[, z_c, Δz])
 ```
 
+**P1 results (synthetic).** The β₀≈0.1 coupling is a sub-percent effect on
+observables (H 0.6%, D_M 0.25%, fσ8 1.3% vs ΛCDM). Pipeline validated: fitting β₀
+with the window fixed recovers it within 1σ at forecast precision
+(0.091±0.016, R̂≈1.00). The full (β₀,z*,σ) fit shows a β₀–σ degeneracy — only the
+integrated transfer (amplitude×width) is constrained.
+
+## 4b. Real-data fit + evidence (P2)
+
+`src/mtp_cosmology/{data,realfit}.py`, `scripts/run_realfit.py`. Fits real DESI
+DR1 BAO (`data.py`, DESI 2024 VI Table 1) with fixed r_d=147.09 Mpc (W_late
+leaves the drag-epoch sound horizon at its ΛCDM value). ΛCDM = the β₀→0 limit
+(zero free params); model evidence via nested sampling (dynesty).
+
+Result: β₀ < 0.27 (95%), Δln Z = −1.9 (β₀ only) / −1.2 (3-param) — weak
+preference for ΛCDM. The coupling cannot relieve the LRG1 D_H/r_d feature at
+z=0.51 (the driver of DESI's evolving-DE hint), so the extra freedom is
+Occam-penalized. A real test of the w₀–wₐ signal needs the full Planck+DESI+SN
+likelihood with a modified Boltzmann code (external environment).
+
 ## 5. Known limitations / open items
 
 - **F_hier inert** at observable z (§1) — acknowledged, not hidden.

@@ -49,9 +49,23 @@ worklog.md              Dated work log
 | Phase | Scope | State |
 |-------|-------|-------|
 | **P0** | Reproducible landing: importable core, fixed paths, docs | ✅ done |
-| **P1** | Observable-based likelihood (H/D_M/fσ8) + emcee MCMC | in progress |
-| **P2** | Real-data MCMC (Cobaya: Planck+DESI+Pantheon+) + evidence | planned |
-| **P3** | Scalar-tensor screening micro-model + paper draft | planned |
+| **P1** | Observable-based likelihood (H/D_M/fσ8) + emcee MCMC | ✅ done |
+| **P2** | Real DESI DR1 BAO fit + Bayesian evidence vs ΛCDM | ✅ done |
+| **P3** | Scalar-tensor screening micro-model + paper draft | ✅ done |
+
+**Headline results (all honest, reproducible):**
+- The coupling at β₀≈0.1 is a **sub-percent** effect on H/D_M/fσ8 — below current
+  precision. Pipeline recovers injected β₀ within 1σ at forecast precision;
+  β₀–σ is degenerate from background+growth data (only β₀ amplitude is
+  constrained).
+- **DESI DR1 BAO**: β₀ < 0.27 (95%), Δln Z = −1.9 (1-param) / −1.2 (3-param) →
+  weak preference for ΛCDM. The coupling is too weak to relieve the LRG1 D_H
+  feature.
+- **Screening**: a chameleon with Solar field excursion < 4.3×10⁻⁸ M_Pl satisfies
+  the Cassini bound.
+
+Run: `python scripts/run_v03.py`, `python scripts/run_mcmc.py --fit beta0`,
+`python scripts/run_realfit.py --fit beta0`. See [paper/paper.md](paper/paper.md).
 
 See [worklog.md](worklog.md) for the running log and
 [ARCHITECTURE.md](ARCHITECTURE.md) for the model.

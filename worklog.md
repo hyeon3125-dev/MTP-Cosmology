@@ -36,3 +36,91 @@ the likelihood on actual observables (H/D_M/fσ8). Documented in ARCHITECTURE §
 
 **Next.** P1 — observable-based likelihood + emcee, then re-derive §3 numbers
 honestly.
+
+---
+
+## 2026-06-22 — P1: observable-based inference (fixes the core defect)
+
+**Goal.** Replace the toy `w(z)=-1-beta0*logistic_pdf` likelihood with one driven
+by the *actual* model observables H(z)/D_M(z)/fsigma8(z), then re-assess parameter
+recovery honestly. (`src/mtp_cosmology/likelihood.py`, `scripts/run_mcmc.py`.)
+
+**Done.**
+- `likelihood.py`: `observables()` from the IDE background solve; Gaussian
+  chi^2 over H/D_M/fsigma8 (single integration per call, ~4 ms); flat priors;
+  emcee-ready `log_posterior`. Two synthetic-data precision presets (`current`,
+  `forecast`).
+- `run_mcmc.py`: emcee with autocorrelation-based burn-in/thinning, Gelman-Rubin
+  R-hat across walkers, recovery table (pull in sigma), corner/posterior plot,
+  derived w_eff(0)/CPL at the posterior mean. `--fit` selects any parameter
+  subset (others fixed at truth).
+
+**Key physical finding — the signal is sub-percent.** The coupling at beta0~0.1
+moves observables by only H 0.6%, D_M 0.25%, fsigma8 1.3% vs LambdaCDM — BELOW
+current measurement errors. So with current-precision data the parameters are
+essentially unconstrained; this is an honest detectability statement, not a bug.
+
+**Results (synthetic, seed 42).**
+- **Pipeline validation** — fit beta0 alone (window fixed), forecast precision:
+  beta0 = 0.0912 ± 0.0163 (truth 0.10, pull −0.54), R-hat 0.998 → recovered
+  within 1 sigma. The likelihood + sampler are correct.
+- **Current precision**, beta0 alone: beta0 = 0.132 ± 0.096 — error ≈ value,
+  ~6x weaker than forecast; weakly constrained as expected.
+- **Full 3-param** (beta0,z*,sigma), forecast: strong **beta0–sigma degeneracy**
+  (only the *integrated* energy transfer ∝ amplitude×width is constrained); z*
+  moderately recovered (~0.37 vs 0.40), sigma prior-dominated. This is physics,
+  not a fitting failure — see `figures/mcmc_corner_3p_forecast.png`.
+
+**Supersedes report §3-4.** The earlier "recovery within 1 sigma" validated a
+logistic curve, not the model. The honest statement: the *amplitude* (beta0) is
+recoverable; the window's location/width are degenerate from background+growth
+data alone, motivating CMB / full-shape inputs (P2+).
+
+Artifacts: `figures/mcmc_corner_{beta0_forecast,beta0_current,3p_forecast}.png`,
+`results/mcmc_summary_*.csv` (raw chains gitignored, regenerable).
+
+---
+
+## 2026-06-22 — P2: real-data fit + Bayesian evidence (DESI DR1 BAO)
+
+**Goal.** Confront the model with real data and compare its Bayesian evidence to
+LambdaCDM. Full Planck+CMB requires a modified Boltzmann stack (out of scope in
+this environment); the achievable, honest test is real **DESI DR1 BAO**
+(`src/mtp_cosmology/{data,realfit}.py`, `scripts/run_realfit.py`).
+
+**Setup.** DESI 2024 VI Table 1 (verified against the arXiv HTML source): 5
+anisotropic tracers (D_M/r_d, D_H/r_d with correlation) + BGS/QSO (D_V/r_d) = 12
+points. r_d = 147.09 Mpc fixed (justified: W_late suppresses Q at high z, so the
+drag-epoch sound horizon is the LambdaCDM value). LambdaCDM = the beta0→0 limit
+with the same fixed Planck background → **zero free parameters**, so its evidence
+is the likelihood at that point. Model evidence via nested sampling (dynesty).
+
+**Results.**
+- LambdaCDM: chi^2 = 20.44 / 12 — dominated by the well-known LRG1 D_H/r_d point
+  at z=0.51 (pred 22.73 vs obs 20.98), the same feature that drives DESI's
+  evolving-DE preference.
+- windowed-IDE, beta0 only: **beta0 < 0.27 (95%)**, Delta ln Z = **−1.87 ± 0.11**.
+- windowed-IDE, (beta0,z*,sigma): Delta ln Z = **−1.18 ± 0.08**; posterior
+  prior-dominated.
+- Both: **weak preference for LambdaCDM** (Jeffreys). The coupling moves H by
+  ~0.6% — far too little to relieve an ~8% / few-sigma LRG1 D_H feature — so the
+  extra freedom is Occam-penalized.
+
+**Honest conclusion.** DESI DR1 BAO neither requires nor excludes the windowed-IDE
+coupling; it bounds beta0 from above and mildly disfavors the model on evidence.
+A genuine test of the DESI w0–wa signal needs the full Planck+DESI+SN likelihood
+with a modified Boltzmann code (real Step 2, external environment).
+
+Artifacts: `results/realfit_desi_*.csv`.
+
+---
+
+## 2026-06-22 — P3: screening micro-model + paper draft
+
+- `src/mtp_cosmology/screening.py`: chameleon thin-shell estimate. For an
+  order-unity matter coupling, a Solar field excursion below ~4.3e-8 M_Pl yields
+  |gamma−1| ≤ 2.3e-5 (Cassini). Demonstrates the cosmological coupling is
+  compatible with Solar-System tests; a full scalar-tensor solve remains future
+  work (honest caveat retained).
+- `paper/paper.md`: draft assembling model → synthetic validation → DESI
+  evidence → screening → honest limitations.

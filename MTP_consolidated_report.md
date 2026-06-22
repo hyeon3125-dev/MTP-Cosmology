@@ -1,3 +1,10 @@
+> **참고 (2026-06-22 갱신):** 이 문서는 워크스페이스 이전 시점의 원본 내러티브
+> 리포트다. 이후 P0–P3 작업으로 코드 구조·수치가 갱신되었으니, 최신 기술 정본은
+> [ARCHITECTURE.md](ARCHITECTURE.md), 진행 기록은 [worklog.md](worklog.md),
+> 논문 초고는 [paper/paper.md](paper/paper.md)를 본다. 특히 §3-4의 MCMC 복원은
+> 토이 w(z) likelihood 산물로, P1에서 관측가능량 기반으로 재산출되었다(§ARCHITECTURE 4).
+> §5의 파일 경로는 `src/`·`scripts/`·`legacy/`로 재배치됨.
+
 # MTP Cosmology — 통합 개발 리포트 (v0.1 → v0.3)
 > Windowed Interacting Dark Energy Toy Model
 > 협업: 가후(수식) · 조비(이론감사) · 조홍(데이터) · 조식(코드) · 고유(검증)
