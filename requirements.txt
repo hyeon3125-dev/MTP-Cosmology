@@ -1,0 +1,11 @@
+# Core model + P0/P1 (synthetic MCMC). Versions are lower-bounds known to work.
+numpy>=1.26,<2.0
+scipy>=1.11
+matplotlib>=3.8
+pandas>=2.0
+emcee>=3.1
+corner>=2.2
+
+# P2 (real-data MCMC + Bayesian evidence) — heavy, install separately:
+#   pip install cobaya
+#   cobaya-install cosmo -p /path/to/packages   # CLASS/CAMB + Planck/DESI likelihoods

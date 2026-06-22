@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# P2 cobaya package install dir (large; install locally)
+cosmo_packages/
+*.chains/
+# Large MCMC chain CSVs are regenerated; keep summaries, ignore raw chains.
+results/*_chain.csv
