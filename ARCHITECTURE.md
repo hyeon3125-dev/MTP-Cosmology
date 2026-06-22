@@ -109,6 +109,22 @@ z=0.51 (the driver of DESI's evolving-DE hint), so the extra freedom is
 Occam-penalized. A real test of the w₀–wₐ signal needs the full Planck+DESI+SN
 likelihood with a modified Boltzmann code (external environment).
 
+## 4c. Fair model comparison (primary objective)
+
+`docs/comparison_methodology.yaml` is the spec. `src/mtp_cosmology/models.py`
+holds a unified registry (ΛCDM, CPL, constant IDE, sign-switching IDE, MTP-3p,
+MTP-4p), each exposing one `H(z, θ)` interface; `compare.py` applies one
+likelihood (H+BAO+SN; SN offset analytically marginalized), χ²_min via
+multi-start optimization, AIC/BIC, and dynesty evidence identically to every
+model; `scripts/run_compare.py` runs a stage and tabulates Δ vs ΛCDM.
+
+Results (`results/model_comparison_*.csv`): phase_0 (mock) validates the engine
+(CPL recovered, ΔAIC=−14.9); phase_1 (real DESI DR1 BAO) shows **CPL is the only
+model beating ΛCDM on AIC+BIC**, while the windowed IDE does not improve on ΛCDM
+on geometry — a perturbative coupling moves H by ≲1%, far less than a free w(a).
+Cosmology is fixed to Planck (background-level); freeing H₀/Ω_m and adding
+growth/CMB are later stages (phase_2–4).
+
 ## 5. Known limitations / open items
 
 - **F_hier inert** at observable z (§1) — acknowledged, not hidden.

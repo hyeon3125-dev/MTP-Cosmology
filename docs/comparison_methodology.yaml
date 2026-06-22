@@ -1,0 +1,295 @@
+comparison_methodology:
+  objective:
+    claim_type: "methodological_framework"
+    main_question: >
+      MTP-windowed IDE가 ΛCDM, CPL, 기존 IDE, sign-switching IDE 대비
+      더 적은/비슷한 자유도로 late-time phantom-like dynamics와 growth 완화 신호를
+      더 잘 설명하는가.
+    reject_condition:
+      - "AIC/BIC/Bayesian evidence에서 ΛCDM/CPL 대비 개선 없음"
+      - "z_star posterior가 coincidence epoch(z≈0.3) 근방에 수렴하지 않음"
+      - "fσ8/S8 완화 방향이 관측과 반대로 감"
+      - "추가 파라미터 penalty를 이기지 못함"
+
+  datasets:
+    baseline:
+      - name: "Planck 2018"
+        role: "early-universe anchor, Ωm/H0/σ8 prior"
+      - name: "DESI BAO"
+        role: "late-time geometry, D_M/r_d, D_H/r_d"
+      - name: "Pantheon+"
+        role: "SN Ia luminosity distance"
+      - name: "RSD/fσ8"
+        role: "growth-rate constraint"
+    staged_runs:
+      stage_1: ["DESI_BAO", "Pantheon+"]
+      stage_2: ["DESI_BAO", "Pantheon+", "Planck_prior"]
+      stage_3: ["DESI_BAO", "Pantheon+", "Planck_prior", "RSD"]
+      stage_4: ["full_CMB_likelihood", "DESI_BAO", "Pantheon+", "RSD"]
+
+  model_set:
+    lcdm:
+      description: "base control model"
+      parameters:
+        cosmological: ["Ω_b h²", "Ω_c h²", "H0", "A_s", "n_s", "τ"]
+        dark_energy: []
+      free_de_params: 0
+      expected_role: "null hypothesis"
+    cpl_w0wa:
+      description: "standard dynamical dark energy comparator"
+      equation: "w(a)=w0+wa(1-a)"
+      parameters:
+        dark_energy: ["w0", "wa"]
+      free_de_params: 2
+      expected_role: "main phenomenological benchmark"
+    standard_ide:
+      description: "constant-coupling interacting dark energy"
+      equation: "Q = ξ H ρ_c"
+      parameters:
+        dark_sector: ["ξ"]
+      free_de_params: 1
+      expected_role: "minimal IDE benchmark"
+    sign_switching_ide:
+      description: "coupling sign flips near dark-sector equality"
+      equation: "Q = ξ(a) H ρ_c"
+      coupling:
+        simple: "ξ(a)=ξ0 * sign(a_eq_dark-a)"
+        smooth: "ξ(a)=ξ0 * tanh((z-zc)/Δz)"
+      parameters:
+        dark_sector: ["ξ0", "zc", "Δz"]
+      free_de_params: "2-3"
+      expected_role: "closest literature comparator"
+    quintom:
+      description: "phantom crossing via two-field effective model"
+      parameters:
+        dark_energy: ["field_1_params", "field_2_params"]
+      free_de_params: ">=4"
+      expected_role: "complexity comparator, not primary baseline"
+    hde_or_rvm:
+      description: "UV/IR or running-vacuum motivated comparator"
+      examples:
+        hde: "ρ_de = 3c²M_p²L⁻²"
+        rvm: "ρ_Λ(H)=c0+νH²+..."
+      parameters:
+        dark_energy: ["c_or_ν"]
+      free_de_params: "1-2"
+      expected_role: "conceptual comparator"
+    mtp_windowed_ide:
+      description: "proposed framework"
+      equation: "Q = β(z) H ρ_c W_late(z)"
+      beta:
+        equation: "β(z)=β0*tanh((z-zc)/Δz)"
+      window:
+        gaussian: "W=exp[-(z-z*)²/(2σ²)]"
+        logistic_pdf: "W=exp[-(z-z*)/σ] / [σ(1+exp[-(z-z*)/σ])²]"
+      parameters:
+        dark_sector: ["β0", "z*", "σ", "zc", "Δz"]
+      free_de_params: "3-5"
+      reduced_variants:
+        mtp_3p:
+          fixed: ["zc=z*", "Δz=σ"]
+          free: ["β0", "z*", "σ"]
+        mtp_4p:
+          fixed: ["zc=z*"]
+          free: ["β0", "z*", "σ", "Δz"]
+        mtp_5p:
+          free: ["β0", "z*", "σ", "zc", "Δz"]
+      preferred_start: "mtp_3p"
+
+  fairness_rules:
+    same_background_priors: true
+    same_dataset_splits: true
+    same_sampler_settings: true
+    same_convergence_criteria: true
+    same_likelihood_implementation: true
+    report_parameter_count: true
+    compare_against_nested_baselines: true
+    no_manual_retuning_after_results: true
+
+  priors:
+    shared_cosmology:
+      H0: ["50", "90"]
+      Ω_m: ["0.1", "0.5"]
+      Ω_b_h2: ["0.019", "0.025"]
+      Ω_c_h2: ["0.08", "0.16"]
+      n_s: ["0.8", "1.2"]
+      logA: ["2.5", "3.7"]
+      τ: ["0.01", "0.12"]
+    cpl:
+      w0: ["-2.0", "-0.3"]
+      wa: ["-3.0", "3.0"]
+    standard_ide:
+      ξ: ["-0.3", "0.3"]
+    sign_switching_ide:
+      ξ0: ["-0.3", "0.3"]
+      zc: ["0.0", "1.5"]
+      Δz: ["0.02", "1.0"]
+    mtp_windowed_ide:
+      β0: ["0.0", "0.3"]
+      z_star: ["0.0", "1.5"]
+      sigma: ["0.05", "1.0"]
+      zc: ["0.0", "1.5"]
+      delta_z: ["0.02", "1.0"]
+      optional_physical_prior:
+        z_star_center: 0.3
+        z_star_sigma: 0.3
+        note: "논문 본문에서는 flat prior 결과를 기본으로, physical prior는 robustness check로만 사용"
+
+  observables:
+    geometry:
+      - "H(z)"
+      - "D_M(z)"
+      - "D_H(z)=c/H(z)"
+      - "D_L(z)"
+      - "BAO ratios: D_M/r_d, D_H/r_d, D_V/r_d"
+    growth:
+      - "fσ8(z)"
+      - "S8 = σ8 sqrt(Ωm/0.3)"
+      - "linear growth D(z)"
+    dark_energy:
+      - "w_eff(z)"
+      - "w0-wa effective fit"
+      - "phantom crossing redshift"
+      - "Q(z) sign-change redshift"
+    local_constraints:
+      - "effective coupling suppression S(ρ)"
+      - "PPN γ residual"
+      - "Cassini compatibility flag"
+
+  metrics:
+    goodness_of_fit:
+      chi2_min: true
+      reduced_chi2: true
+    information_criteria:
+      AIC: "χ²_min + 2k"
+      BIC: "χ²_min + k ln(N)"
+      delta_AIC: "AIC_model - AIC_LCDM"
+      delta_BIC: "BIC_model - BIC_LCDM"
+    bayesian:
+      evidence: "logZ via nested sampling or thermodynamic integration"
+      bayes_factor: "ΔlogZ vs ΛCDM/CPL"
+    complexity:
+      parameter_count_k: true
+      effective_parameter_count: "optional"
+      compression_score: "explained_observables / free_dark_sector_params"
+
+  success_thresholds:
+    minimal_publishable:
+      - "ΔAIC < -2 vs ΛCDM"
+      - "no catastrophic degradation vs CPL"
+      - "posterior bounded, not prior-dominated"
+      - "w_eff crosses or approaches phantom-like region without instability"
+    strong_case:
+      - "ΔAIC < -6 vs ΛCDM"
+      - "ΔBIC <= 0 despite extra parameters"
+      - "Bayes factor positive vs CPL or sign-switching IDE"
+      - "z_star posterior overlaps z≈0.3"
+      - "S8/fσ8 moves in observed tension-relieving direction"
+    failure_case:
+      - "MTP only wins with 5p but loses BIC badly"
+      - "z_star posterior broad/unconstrained"
+      - "β0 consistent with 0"
+      - "growth worsens σ8/S8 tension"
+      - "requires unphysical priors"
+
+  run_matrix:
+    phase_0_sanity:
+      models: ["lcdm", "cpl_w0wa", "mtp_3p"]
+      data: ["mock", "compressed_Hz_BAO_SN"]
+      goal: "pipeline validation"
+      output: ["χ²", "AIC", "BIC", "posterior sanity"]
+    phase_1_background:
+      models: ["lcdm", "cpl_w0wa", "standard_ide", "sign_switching_ide", "mtp_3p", "mtp_4p"]
+      data: ["DESI_BAO", "Pantheon+"]
+      goal: "late-time geometry comparison"
+      output: ["D_M", "D_H", "D_L", "w_eff"]
+    phase_2_planck_prior:
+      models: ["lcdm", "cpl_w0wa", "sign_switching_ide", "mtp_3p", "mtp_4p"]
+      data: ["DESI_BAO", "Pantheon+", "Planck_distance_prior"]
+      goal: "early-late consistency"
+      output: ["Ωm", "H0", "r_d", "z_star posterior"]
+    phase_3_growth:
+      models: ["lcdm", "cpl_w0wa", "sign_switching_ide", "mtp_3p", "mtp_4p"]
+      data: ["DESI_BAO", "Pantheon+", "Planck_prior", "RSD_fσ8"]
+      goal: "σ8/S8 effect check"
+      output: ["fσ8(z)", "S8", "growth residuals"]
+    phase_4_full_boltzmann:
+      models: ["lcdm", "cpl_w0wa", "standard_ide", "sign_switching_ide", "mtp_3p"]
+      tools: ["CLASS_or_CAMB", "MontePython_or_Cobaya"]
+      data: ["Planck_full", "DESI_BAO", "Pantheon+", "RSD"]
+      goal: "paper-grade result"
+      output: ["posterior chains", "AIC/BIC", "logZ", "corner plots"]
+
+  implementation_plan:
+    code_structure:
+      root:
+        - "README.md"
+        - "requirements.txt"
+        - "configs/"
+        - "data/"
+        - "src/"
+        - "notebooks/"
+        - "outputs/"
+        - "docs/"
+      src:
+        - "models/lcdm.py"
+        - "models/cpl.py"
+        - "models/ide_constant.py"
+        - "models/ide_sign_switch.py"
+        - "models/mtp_windowed_ide.py"
+        - "likelihoods/bao.py"
+        - "likelihoods/snia.py"
+        - "likelihoods/rsd.py"
+        - "likelihoods/planck_prior.py"
+        - "samplers/metropolis.py"
+        - "samplers/cobaya_adapter.py"
+        - "analysis/aic_bic.py"
+        - "analysis/posterior_summary.py"
+    reproducibility:
+      random_seed: 42
+      chain_format: "csv + npz"
+      config_format: "yaml"
+      environment: "requirements.txt or conda env"
+      run_log: "outputs/run_manifest.json"
+      citation_file: "docs/references.md"
+
+  paper_claims:
+    safe_claims:
+      - "MTP-windowed IDE is a phenomenological transfer framework."
+      - "The framework can reproduce phantom-like effective dynamics with a single sign-switching coupling."
+      - "The framework links late-time activation to the coincidence epoch as a testable prior, not as a proven law."
+      - "Model comparison against ΛCDM/CPL/IDE determines whether the framework is economical."
+    unsafe_claims:
+      - "미시 무한수렴이 실재한다"
+      - "암흑에너지의 정체를 설명했다"
+      - "DESI가 MTP를 검증했다"
+      - "스크리닝으로 모든 국소 제약이 자동 해결된다"
+
+  expected_outputs_for_git:
+    docs:
+      - "docs/mtp_cosmology_report.md"
+      - "docs/comparison_methodology.yaml"
+      - "docs/model_equations.md"
+      - "docs/references.md"
+    configs:
+      - "configs/lcdm.yaml"
+      - "configs/cpl_w0wa.yaml"
+      - "configs/ide_sign_switch.yaml"
+      - "configs/mtp_3p.yaml"
+      - "configs/mtp_4p.yaml"
+    scripts:
+      - "src/models/mtp_windowed_ide.py"
+      - "src/analysis/model_compare.py"
+      - "run_mcmc.py"
+    outputs:
+      - "outputs/mcmc_summary.csv"
+      - "outputs/model_comparison_table.csv"
+      - "outputs/corner_mtp_3p.png"
+
+  immediate_next_task:
+    name: "comparison_methodology_yaml_to_file"
+    action: "Save this YAML as docs/comparison_methodology.yaml"
+    then:
+      - "Implement model registry"
+      - "Run mock comparison: LCDM vs CPL vs MTP_3p"
+      - "Generate AIC/BIC table"

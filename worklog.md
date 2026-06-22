@@ -124,3 +124,57 @@ Artifacts: `results/realfit_desi_*.csv`.
   work (honest caveat retained).
 - `paper/paper.md`: draft assembling model → synthetic validation → DESI
   evidence → screening → honest limitations.
+
+---
+
+## 2026-06-22 — Reorientation: fair model-comparison framework
+
+**Why.** The earlier P2 was too narrow — a single MTP-vs-ΛCDM evidence test on
+DESI. The actual objective (per `docs/comparison_methodology.yaml`) is a *fair
+comparison* of windowed IDE against ΛCDM, CPL, constant IDE and sign-switching
+IDE under identical priors/likelihood/sampler/metrics. Also removed the internal
+persona "collaboration roles" from README/paper/report (not appropriate in a
+scientific repo).
+
+**Built.**
+- `src/mtp_cosmology/models.py` — unified model registry with one H(z, θ)
+  interface: `lcdm` (0 DE params), `cpl_w0wa`, `standard_ide` (Q=ξHρ_c),
+  `sign_switching_ide` (ξ tanh), `mtp_3p` (zc=z*, dz=σ), `mtp_4p`. Shared
+  `solve_ide(kernel)`; cosmology fixed to Planck (background-level comparison).
+- `src/mtp_cosmology/compare.py` — one likelihood for H(z)+BAO(D_M/D_H/D_V)+SN
+  (SN offset analytically marginalized); χ²_min via multi-start Nelder-Mead;
+  AIC/BIC; dynesty evidence. Real DESI DR1 dataset + mock generator.
+- `scripts/run_compare.py` — runs a methodology stage, prints/saves an
+  AIC/BIC/Δln Z table referenced to ΛCDM.
+- `docs/comparison_methodology.yaml` — the spec (saved as requested).
+
+**phase_0 (mock from CPL, pipeline validation).** Engine recovers the injected
+fiducial: CPL best-fit (w0,wa)=(−0.836,−0.666) vs injected (−0.85,−0.60),
+ΔAIC=−14.9, Δln Z=+2.6 (moderate→model). mtp_3p partially mimics it
+(ΔAIC=−4.5). The comparison machinery works and discriminates.
+
+**phase_1 (real DESI DR1 BAO).** Key result:
+
+| model | k | χ² | ΔAIC | ΔBIC | Δln Z |
+|-------|---|------|------|------|-------|
+| ΛCDM | 0 | 20.44 | 0 | 0 | 0 |
+| **CPL** | 2 | **11.77** | **−4.66** | **−3.69** | −0.45 |
+| standard_ide | 1 | 20.23 | +1.80 | +2.28 | −1.21 |
+| sign_switching_ide | 3 | 18.46 | +4.03 | +5.48 | −0.79 |
+| mtp_3p | 3 | 20.03 | +5.60 | +7.05 | −0.22 |
+| mtp_4p | 4 | 18.17 | +5.73 | +7.67 | −0.34 |
+
+**Verdict (honest, answers the methodology's main_question).** On DESI DR1 BAO
+geometry, **CPL is the only model that beats ΛCDM on both AIC and BIC** — it
+captures the known evolving-DE signal (w0=−0.78, wa=−0.76) with 2 parameters.
+The windowed IDE barely reduces χ² (20.44→20.03): a *perturbative* late-time
+coupling (β0<0.3) moves H by ≲1%, far too little to reshape geometry as much as a
+free w(a). It triggers the methodology's `reject_condition`/`failure_case`
+(β0 effectively unconstrained, σ rails to its bound, no AIC/BIC gain).
+
+**Implication / path forward.** Geometry alone does not favour MTP. Its only
+plausible edge over CPL is the **growth sector** (fσ8/S8), where IDE imprints a
+distinctive dark-sector energy-transfer signature that a pure w(a) model lacks —
+i.e. `phase_3`. That, plus the full Planck+SN likelihood (`phase_4`), is where
+the comparison must go for a decisive answer. Artifacts:
+`results/model_comparison_{phase_0,phase_1}.csv`.

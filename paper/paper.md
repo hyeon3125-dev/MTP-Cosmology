@@ -126,6 +126,37 @@ On the Jeffreys scale both are a *weak preference for ΛCDM*: the ~0.6% coupling
 cannot move the ~8% LRG1 D_H feature, so the additional parameters are
 Occam-penalized.
 
+### 5.1 Fair comparison against standard dynamical-DE models
+
+The decisive question is not MTP vs ΛCDM alone but whether MTP is *economical*
+relative to established alternatives. We compare ΛCDM, CPL (w₀,wₐ), constant IDE,
+sign-switching IDE, and the MTP 3- and 4-parameter variants under identical
+priors, likelihood, sampler and metrics (the comparison engine, `compare.py`).
+
+A pipeline-validation stage on mock data generated from a CPL fiducial recovers
+the injected (w₀, wₐ) = (−0.85, −0.60) as (−0.836, −0.666) and correctly selects
+CPL (ΔAIC = −14.9, Δln Z = +2.6), confirming the engine discriminates.
+
+On **real DESI DR1 BAO** (Table below), **CPL is the only model that beats ΛCDM
+on both AIC and BIC**, capturing the evolving-DE signal (w₀ = −0.78, wₐ = −0.76)
+with two parameters. The windowed IDE barely reduces χ² (20.44 → 20.03); a
+perturbative coupling (β₀ < 0.3) moves H(z) by ≲1%, too little to reshape the
+geometry as much as a free w(a), so its extra parameters are penalized.
+
+| model | k | χ² | ΔAIC | ΔBIC | Δln Z |
+|-------|---|------|------|------|-------|
+| ΛCDM | 0 | 20.44 | 0 | 0 | 0 |
+| CPL | 2 | 11.77 | −4.66 | −3.69 | −0.45 |
+| standard IDE | 1 | 20.23 | +1.80 | +2.28 | −1.21 |
+| sign-switching IDE | 3 | 18.46 | +4.03 | +5.48 | −0.79 |
+| MTP-3p | 3 | 20.03 | +5.60 | +7.05 | −0.22 |
+| MTP-4p | 4 | 18.17 | +5.73 | +7.67 | −0.34 |
+
+**On geometry alone, the windowed IDE is not competitive with CPL.** Its only
+plausible edge is the growth sector (fσ8/S8), where dark-sector energy transfer
+imprints a signature absent from a pure w(a) parametrization — the natural next
+test (§7).
+
 ## 6. Screening and Solar-System tests
 
 To suppress the cosmological coupling in dense environments we adopt a chameleon
@@ -153,12 +184,14 @@ future work.
 ## 8. Conclusion
 
 The windowed IDE model cleanly generates a late-time phantom crossing in the
-DESI-preferred direction and admits a viable screening mechanism. However, an
-honest inference shows the effect is sub-percent at physically reasonable
-couplings: synthetic data constrain only the coupling amplitude (the window
-shape is degenerate), and real DESI DR1 BAO bound β₀ < 0.27 while mildly
-favouring ΛCDM on evidence. The model is a consistent toy framework whose
-decisive test awaits a full CMB-inclusive likelihood.
+DESI-preferred direction and admits a viable screening mechanism. However, a fair
+comparison is unambiguous on present geometry: on DESI DR1 BAO, CPL beats ΛCDM on
+both AIC and BIC while the windowed IDE does not improve on ΛCDM at all, because a
+perturbative late-time coupling cannot reshape H(z) as strongly as a free w(a).
+The model is a consistent toy framework but, as it stands, **not economical
+against CPL on geometric data**. Its decisive test lies in the growth sector
+(fσ8/S8) and a full CMB-inclusive likelihood, where the dark-sector transfer
+could in principle differentiate it from a pure equation-of-state model.
 
 ---
 
@@ -173,6 +206,3 @@ python scripts/run_realfit.py --fit beta0       # DESI DR1 BAO evidence
 
 ### Data
 DESI 2024 VI (arXiv:2404.03002), Table 1. Sound horizon r_d from Planck 2018.
-
-### Author roles (internal)
-수식 가후 · 이론감사 조비 · 데이터 조홍 · 코드 조식 · 검증 고유.

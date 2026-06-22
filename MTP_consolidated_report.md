@@ -7,7 +7,6 @@
 
 # MTP Cosmology — 통합 개발 리포트 (v0.1 → v0.3)
 > Windowed Interacting Dark Energy Toy Model
-> 협업: 가후(수식) · 조비(이론감사) · 조홍(데이터) · 조식(코드) · 고유(검증)
 > 상태: 합성 데이터 MCMC 완료 / 실데이터 MCMC 및 스크리닝 구현 = 워크스페이스 이전 대상
 
 ---

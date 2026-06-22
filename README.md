@@ -67,9 +67,21 @@ worklog.md              Dated work log
 Run: `python scripts/run_v03.py`, `python scripts/run_mcmc.py --fit beta0`,
 `python scripts/run_realfit.py --fit beta0`. See [paper/paper.md](paper/paper.md).
 
+## Model comparison (primary objective)
+
+The point of the project is **fair model comparison**: does windowed IDE explain
+late-time phantom-like dynamics and growth with comparable or fewer effective
+degrees of freedom than ΛCDM, CPL, and existing IDE variants? The methodology
+(model set, datasets, priors, metrics, success/failure thresholds, run matrix)
+is specified in [docs/comparison_methodology.yaml](docs/comparison_methodology.yaml).
+
+```bash
+python scripts/run_compare.py --stage phase_0   # mock pipeline validation
+python scripts/run_compare.py --stage phase_1   # real DESI DR1 BAO
+```
+
+Outputs an AIC/BIC/Δln Z table over {ΛCDM, CPL, constant IDE, sign-switching IDE,
+MTP-3p}. See [worklog.md](worklog.md) for results.
+
 See [worklog.md](worklog.md) for the running log and
 [ARCHITECTURE.md](ARCHITECTURE.md) for the model.
-
-## Collaboration roles (internal)
-
-수식 가후 · 이론감사 조비 · 데이터 조홍 · 코드 조식 · 검증 고유.
