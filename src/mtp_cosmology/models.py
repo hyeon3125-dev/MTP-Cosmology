@@ -65,6 +65,7 @@ class Model:
     _H: Callable
     description: str = ""
     _kernel: Callable | None = None   # (theta)->kernel(z); None for non-IDE
+    _rho_m: Callable | None = None    # (z, theta)->rho_c/rho_c0 override
 
     @property
     def k(self) -> int:
@@ -80,6 +81,8 @@ class Model:
         Non-IDE models: standard (1+z)^3. IDE models: from the coupled solve.
         """
         z = np.atleast_1d(np.asarray(z, dtype=float))
+        if self._rho_m is not None:
+            return self._rho_m(z, np.atleast_1d(np.asarray(theta, dtype=float)))
         if self._kernel is None:
             return (1.0 + z) ** 3
         rho_c, _ = solve_ide(z, self._kernel(np.atleast_1d(np.asarray(theta, dtype=float))))
@@ -142,6 +145,48 @@ def _H_mtp4p(z, theta):
     return _H_from_densities(z, rho_c, rho_de)
 
 
+# ── Holographic DE (future event-horizon cutoff) ─────────────────────────────
+def _H_hde(z, theta):
+    """HDE: dOmega_de/dx = Omega_de(1-Omega_de)(1 + 2 sqrt(Omega_de)/c), x=ln a.
+    Reconstruct E^2 = (Om0 a^-3 + Or0 a^-4)/(1-Omega_de)."""
+    (c,) = theta
+    z = np.atleast_1d(z)
+    z_max = float(z.max())
+    x_min = np.log(1.0 / (1.0 + z_max))         # most negative (high z)
+    x_eval = np.sort(np.log(1.0 / (1.0 + z)))   # ascending in x
+    x_grid = np.linspace(0.0, x_min, 600)        # integrate backward from today
+
+    def deriv(x, y):
+        ode = y[0]
+        ode = min(max(ode, 1e-12), 1.0 - 1e-12)
+        return [ode * (1.0 - ode) * (1.0 + 2.0 * np.sqrt(ode) / c)]
+
+    from scipy.integrate import solve_ivp
+    sol = solve_ivp(deriv, (0.0, x_min), [ODE0], t_eval=x_grid,
+                    method="RK45", rtol=1e-7, atol=1e-9)
+    Ode_x = np.clip(sol.y[0], 1e-12, 1.0 - 1e-12)
+    a_grid = np.exp(x_grid)
+    E2 = (OM0 * a_grid ** -3 + OR0 * a_grid ** -4) / (1.0 - Ode_x)
+    # map back to requested z (x_grid descending; sort for interp)
+    order = np.argsort(x_grid)
+    E = np.interp(np.log(1.0 / (1.0 + z)), x_grid[order], np.sqrt(np.maximum(E2, 1e-12))[order])
+    return H0 * E
+
+
+# ── Running vacuum (RVM type-II, anomalous matter scaling) ────────────────────
+def _H_rvm(z, theta):
+    (nu,) = theta
+    om_eff = OM0 / (1.0 - nu)
+    OL = 1.0 - om_eff - OR0
+    e2 = om_eff * (1.0 + z) ** (3.0 * (1.0 - nu)) + OR0 * (1.0 + z) ** 4 + OL
+    return H0 * np.sqrt(np.maximum(e2, 1e-12))
+
+
+def _rho_m_rvm(z, theta):
+    (nu,) = theta
+    return (1.0 + z) ** (3.0 * (1.0 - nu))     # anomalous matter dilution
+
+
 # Coupling-kernel factories (theta -> kernel(z)) for IDE models; used by rho_m.
 def _k_const(theta):
     return lambda zz: theta[0]
@@ -182,6 +227,10 @@ REGISTRY = {
                     {"beta0": (0.0, 0.3), "z_star": (0.0, 1.5),
                      "sigma": (0.05, 1.0), "zc": (0.0, 1.5)},
                     _H_mtp4p, "MTP windowed IDE (zc free)", _k_mtp4p),
+    "hde": Model("hde", ["c"], {"c": (0.4, 1.2)}, _H_hde,
+                 "holographic DE (future event-horizon cutoff)"),
+    "rvm": Model("rvm", ["nu"], {"nu": (-0.1, 0.1)}, _H_rvm,
+                 "running vacuum (type-II)", _rho_m=_rho_m_rvm),
 }
 
 
